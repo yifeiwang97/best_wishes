@@ -27,16 +27,16 @@
 
 ## 🚀 快速开始
 
-### 方式一：Docker 部署（推荐）
+### 方式一：Docker 部署（推荐 - 最简单）
 
-最简单的部署方式，适合生产环境。
+最简单的部署方式，无需处理 Python 环境问题。
 
 ```bash
-# 1. 克隆项目
-git clone <repository-url>
-cd bestwishes
+# 1. 确保安装了 Docker Desktop
+# 下载地址：https://www.docker.com/products/docker-desktop/
 
 # 2. 启动服务
+cd bestwishes
 docker-compose up -d
 
 # 3. 访问应用
@@ -56,27 +56,67 @@ docker-compose down
 docker-compose down -v
 ```
 
-### 方式二：本地 Python 部署
+### 方式二：本地 Python 部署（需要 Python 3.10+）
 
-适合开发调试。
+**重要提示**：本地部署需要 Python 3.10 或更高版本。
+
+#### 步骤 1：安装 Python 3.10
+
+如果系统 Python 版本低于 3.10：
+
+1. 访问 https://www.python.org/downloads/macos/
+2. 下载 Python 3.10.x（推荐 3.10.13）
+3. 安装后验证：`/usr/local/bin/python3.10 --version`
+
+#### 步骤 2：使用自动配置脚本（推荐）
 
 ```bash
-# 1. 创建虚拟环境（推荐使用 Python 3.10）
-python3.10 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+cd bestwishes
 
-# 2. 安装依赖
+# 运行自动配置脚本
+./setup_python.sh
+```
+
+脚本会自动完成所有配置，包括创建虚拟环境和安装依赖。
+
+#### 步骤 3：手动安装（如果脚本失败）
+
+```bash
+# 1. 创建虚拟环境
+/usr/local/bin/python3.10 -m venv venv
+source venv/bin/activate
+
+# 2. 运行修复安装脚本（解决依赖冲突）
+./fix_install.sh
+```
+
+**常见问题**：
+
+- **SSL 证书错误**：使用 `pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org <包名>`
+- **numba/llvmlite 编译失败**：运行 `./fix_install.sh`，脚本会自动处理
+- **缺少依赖模块**：脚本会自动安装所有必需的依赖
+
+#### 步骤 4：启动应用
+
+```bash
+source venv/bin/activate
 cd backend
-pip install -r requirements.txt
-
-# 3. 启动服务
 python main.py
-
-# 或使用 uvicorn
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 访问 http://localhost:8000 即可使用。
+
+### 方式三：一键启动脚本
+
+```bash
+# Linux/Mac
+./start.sh
+
+# Windows
+start.bat
+```
+
+启动脚本会自动检测环境并选择最佳部署方式。
 
 ## 📖 使用指南
 
@@ -193,32 +233,82 @@ deploy:
 
 ## 🛠️ 常见问题
 
-### Q: 首次启动很慢？
-A: 首次运行需要下载约 1.8GB 的 XTTS 模型，请耐心等待。模型会缓存，后续启动很快。
+### 安装相关
 
-### Q: 生成速度慢？
-A: 
+#### Q: 提示 "No module named 'fastapi'"？
+**A**: Python 版本过低或依赖未安装
+```bash
+# 方案 1：使用 Docker（推荐）
+docker-compose up -d
+
+# 方案 2：升级 Python 并安装依赖
+./setup_python.sh
+```
+
+#### Q: SSL 证书验证错误？
+**A**: macOS 系统证书问题
+```bash
+# 使用信任主机选项安装
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+```
+
+#### Q: numba/llvmlite 编译失败？
+**A**: 这些包需要编译，可能在某些环境失败
+```bash
+# 运行修复脚本（会自动跳过失败的包）
+./fix_install.sh
+```
+**注意**：跳过 numba 不影响核心功能。
+
+#### Q: 缺少各种依赖模块（coqpit, transformers 等）？
+**A**: TTS 依赖较多，需要完整安装
+```bash
+# 运行修复脚本安装所有依赖
+source venv/bin/activate
+./fix_install.sh
+```
+
+#### Q: transformers 导入错误？
+**A**: 版本兼容问题
+```bash
+pip install --upgrade transformers
+```
+
+### 运行相关
+
+#### Q: 首次启动很慢？
+**A**: 首次运行需要下载约 1.8GB 的 XTTS 模型，请耐心等待。模型会缓存，后续启动很快。
+
+#### Q: 生成速度慢？
+**A**: 
 - CPU 推理较慢，建议使用 GPU
 - Mac 用户会自动使用 MPS 加速
 - 可以减少文本长度，分段合成
 
-### Q: 中文效果不佳？
-A: 
+#### Q: 中文效果不佳？
+**A**: 
 - 确保参考音频为中文
 - 避免使用复杂的专业术语或缩写
 - 可尝试调整参考音频的长度和质量
 
-### Q: 内存不足？
-A: 
+#### Q: 内存不足？
+**A**: 
 - 关闭其他占用内存的程序
 - 减少文本长度
 - 使用更大内存的机器
 
-### Q: Docker 容器无法启动？
-A: 
+#### Q: Docker 容器无法启动？
+**A**: 
 - 检查端口 8000 是否被占用
 - 查看日志：`docker-compose logs`
 - 确保 Docker 有足够的内存分配（建议 8GB+）
+
+### 详细故障排除
+
+查看完整的故障排除指南：
+```bash
+cat TROUBLESHOOTING.md
+```
 
 ## 🔒 隐私与安全
 

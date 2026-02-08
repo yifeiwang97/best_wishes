@@ -4,13 +4,18 @@
 
 ## 📦 方式一：一键启动（最简单）
 
+**⚠️ 重要提示**：一键启动需要 Python 3.10+ 或 Docker。
+
 ### macOS / Linux
 
 ```bash
 # 进入项目目录
 cd bestwishes
 
-# 运行启动脚本
+# 如果没有 Python 3.10，先运行配置脚本
+./setup_python.sh
+
+# 然后启动应用
 ./start.sh
 ```
 
@@ -25,6 +30,10 @@ start.bat
 ```
 
 启动脚本会自动检测您的环境并选择最佳部署方式。
+
+**如果遇到问题**：
+- 检查 Python 版本：`python --version`（需要 3.10+）
+- 或使用 Docker：`docker-compose up -d`
 
 ## 🐳 方式二：Docker 部署（推荐）
 
@@ -43,27 +52,56 @@ docker-compose logs -f
 
 **首次启动提示**：首次运行会自动下载约 1.8GB 的 XTTS 模型，请耐心等待 5-10 分钟。
 
-## 💻 方式三：本地 Python 部署
+## 💻 方式三：本地 Python 部署（需要 Python 3.10+）
 
 适合开发调试。
 
-```bash
-# 1. 创建虚拟环境（推荐 Python 3.10）
-python3.10 -m venv venv
+### 快速安装（推荐）
 
-# 2. 激活虚拟环境
+```bash
+# 1. 运行自动配置脚本
+cd bestwishes
+./setup_python.sh
+
+# 脚本会自动：
+# - 查找 Python 3.10+
+# - 创建虚拟环境
+# - 安装所有依赖
+# - 运行环境检查
+
+# 2. 启动应用
+source venv/bin/activate
+cd backend
+python main.py
+```
+
+### 手动安装
+
+```bash
+# 1. 确保有 Python 3.10+
+# 如果没有，从 https://www.python.org/downloads/ 下载安装
+
+# 2. 创建虚拟环境
+/usr/local/bin/python3.10 -m venv venv
+
+# 3. 激活虚拟环境
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# 3. 安装依赖
-cd backend
-pip install -r requirements.txt
+# 4. 运行修复安装脚本（解决依赖问题）
+./fix_install.sh
 
-# 4. 启动服务
+# 5. 启动服务
+cd backend
 python main.py
 
-# 5. 打开浏览器
+# 6. 打开浏览器
 # 访问 http://localhost:8000
 ```
+
+**常见问题**：
+- SSL 错误：脚本会自动使用 `--trusted-host` 解决
+- numba 编译失败：脚本会自动跳过（不影响使用）
+- 缺少模块：运行 `./fix_install.sh` 安装所有依赖
 
 ## 🎯 使用步骤
 

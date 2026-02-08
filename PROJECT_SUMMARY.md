@@ -215,18 +215,34 @@ bestwishes/
 
 ### 最快方式（推荐）
 
+**方式 1：Docker（最简单，无需配置）**
 ```bash
-# Linux/Mac
-./start.sh
-
-# Windows
-start.bat
-
-# 或使用 Docker
 docker-compose up -d
 ```
 
+**方式 2：自动配置脚本（需要 Python 3.10+）**
+```bash
+./setup_python.sh  # 自动配置环境
+./start.sh         # 启动应用
+```
+
+**方式 3：手动安装**
+```bash
+# 1. 安装 Python 3.10（从 python.org 下载）
+# 2. 创建虚拟环境
+/usr/local/bin/python3.10 -m venv venv
+source venv/bin/activate
+
+# 3. 运行修复脚本
+./fix_install.sh
+
+# 4. 启动应用
+cd backend && python main.py
+```
+
 访问 http://localhost:8000 即可使用！
+
+**✅ 已验证可用**：查看 `INSTALLATION_SUCCESS.md` 了解实际安装过程。
 
 ## 📋 使用流程
 
