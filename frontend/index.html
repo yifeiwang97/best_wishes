@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语音克隆应用</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .file-upload:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .file-upload.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-text {
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            color: #28a745;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .result h3 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        audio {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .error {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff5f5;
+            border: 2px solid #fc8181;
+            border-radius: 10px;
+            color: #c53030;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+
+        .info-box strong {
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ 语音克隆应用</h1>
+        <p class="subtitle">上传参考音频，输入文字，即可克隆音色</p>
+
+        <div class="info-box">
+            <strong>💡 使用提示：</strong><br>
+            • 参考音频：3-30秒，清晰无噪音，支持 wav/mp3 等格式<br>
+            • 文本内容：最多 5000 字符<br>
+            • 首次使用会下载模型（约 1.8GB），请耐心等待
+        </div>
+
+        <form id="voiceForm">
+            <div class="form-group">
+                <label for="voiceFile">参考音频 *</label>
+                <div class="file-upload" id="fileUpload">
+                    <input type="file" id="voiceFile" accept=".wav,.mp3,.m4a,.flac,.ogg" required>
+                    <div class="file-upload-text">
+                        点击或拖拽上传音频文件<br>
+                        <small style="color: #999;">支持 WAV, MP3, M4A, FLAC, OGG</small>
+                    </div>
+                    <div class="file-name" id="fileName"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="text">目标文字 *</label>
+                <textarea id="text" placeholder="请输入要合成的文字..." required maxlength="5000"></textarea>
+                <div class="char-count">
+                    <span id="charCount">0</span> / 5000 字符
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="language">语言</label>
+                <select id="language">
+                    <option value="zh-cn">中文</option>
+                    <option value="en">English</option>
+                    <option value="ja">日本語</option>
+                    <option value="ko">한국어</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="it">Italiano</option>
+                    <option value="pt">Português</option>
+                    <option value="ru">Русский</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                🎵 开始合成
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">正在合成语音，请稍候...</div>
+        </div>
+
+        <div class="result" id="result">
+            <h3>✅ 合成成功！</h3>
+            <audio controls id="audioPlayer"></audio>
+            <a href="#" class="download-btn" id="downloadBtn" download="synthesized.wav">
+                📥 下载音频
+            </a>
+        </div>
+
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('voiceForm');
+        const fileUpload = document.getElementById('fileUpload');
+        const fileInput = document.getElementById('voiceFile');
+        const fileName = document.getElementById('fileName');
+        const textArea = document.getElementById('text');
+        const charCount = document.getElementById('charCount');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const error = document.getElementById('error');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // 文件上传区域点击事件
+        fileUpload.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 文件选择事件
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = `已选择: ${file.name}`;
+            }
+        });
+
+        // 拖拽上传
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                fileInput.files = e.dataTransfer.files;
+                fileName.textContent = `已选择: ${file.name}`;
+            }
+        });
+
+        // 字符计数
+        textArea.addEventListener('input', () => {
+            const count = textArea.value.length;
+            charCount.textContent = count;
+            
+            if (count > 4500) {
+                charCount.style.color = '#fc8181';
+            } else {
+                charCount.style.color = '#999';
+            }
+        });
+
+        // 表单提交
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 隐藏之前的结果和错误
+            result.classList.remove('active');
+            error.classList.remove('active');
+
+            // 验证输入
+            const file = fileInput.files[0];
+            const text = textArea.value.trim();
+
+            if (!file) {
+                showError('请选择参考音频文件');
+                return;
+            }
+
+            if (!text) {
+                showError('请输入要合成的文字');
+                return;
+            }
+
+            // 显示加载状态
+            loading.classList.add('active');
+            submitBtn.disabled = true;
+
+            // 准备表单数据
+            const formData = new FormData();
+            formData.append('voice_file', file);
+            formData.append('text', text);
+            formData.append('language', document.getElementById('language').value);
+
+            try {
+                const response = await fetch('/api/synthesize', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || '合成失败');
+                }
+
+                // 获取音频数据
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                // 显示结果
+                audioPlayer.src = audioUrl;
+                downloadBtn.href = audioUrl;
+                result.classList.add('active');
+
+                // 滚动到结果区域
+                result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            } catch (err) {
+                showError(err.message || '合成失败，请重试');
+            } finally {
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+            }
+        });
+
+        function showError(message) {
+            error.textContent = `❌ ${message}`;
+            error.classList.add('active');
+            setTimeout(() => {
+                error.classList.remove('active');
+            }, 5000);
+        }
+
+        // 页面加载时检查服务状态
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/health');
+                if (!response.ok) {
+                    showError('服务暂时不可用，请稍后再试');
+                }
+            } catch (err) {
+                showError('无法连接到服务器');
+            }
+        });
+    </script>
+</body>
+</html>
